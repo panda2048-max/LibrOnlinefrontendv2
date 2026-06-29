@@ -41,7 +41,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { data: users = [] } = useListUsers();
+  const { data: rawUsers } = useListUsers();
+  const users = Array.isArray(rawUsers) ? rawUsers : [];
 
   if (isAuthenticated && user) {
     setLocation(routes[user.role] || "/");
