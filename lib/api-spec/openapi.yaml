@@ -1,0 +1,1184 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Sistema de gestión escolar
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+  - name: auth
+  - name: users
+  - name: courses
+  - name: schedule
+  - name: grades
+  - name: attendance
+  - name: annotations
+  - name: meetings
+  - name: announcements
+  - name: dashboard
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # AUTH
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  # USERS (Admin)
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [alumno, apoderado, profesor, inspector, admin]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create user (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    patch:
+      operationId: updateUser
+      tags: [users]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      operationId: deleteUser
+      tags: [users]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  # COURSES
+  /courses:
+    get:
+      operationId: listCourses
+      tags: [courses]
+      summary: List courses
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Course"
+    post:
+      operationId: createCourse
+      tags: [courses]
+      summary: Create course (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+
+  /courses/{id}:
+    get:
+      operationId: getCourse
+      tags: [courses]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+
+  # SCHEDULE (Horario)
+  /schedule:
+    get:
+      operationId: listSchedule
+      tags: [schedule]
+      summary: List schedule entries (optionally filtered by studentId or teacherId)
+      parameters:
+        - name: studentId
+          in: query
+          schema:
+            type: integer
+        - name: teacherId
+          in: query
+          schema:
+            type: integer
+        - name: courseId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScheduleEntry"
+    post:
+      operationId: createScheduleEntry
+      tags: [schedule]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduleInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleEntry"
+
+  # GRADES (Notas)
+  /grades:
+    get:
+      operationId: listGrades
+      tags: [grades]
+      summary: List grades filtered by studentId, courseId, or rut
+      parameters:
+        - name: studentId
+          in: query
+          schema:
+            type: integer
+        - name: courseId
+          in: query
+          schema:
+            type: integer
+        - name: rut
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Grade"
+    post:
+      operationId: createGrade
+      tags: [grades]
+      summary: Create grade (profesor)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GradeInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Grade"
+
+  /grades/{id}:
+    patch:
+      operationId: updateGrade
+      tags: [grades]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GradeUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Grade"
+    delete:
+      operationId: deleteGrade
+      tags: [grades]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /grades/average/{studentId}/{courseId}:
+    get:
+      operationId: getGradeAverage
+      tags: [grades]
+      summary: Get student grade average for a course
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GradeAverage"
+
+  # ATTENDANCE (Asistencia)
+  /attendance:
+    get:
+      operationId: listAttendance
+      tags: [attendance]
+      summary: List attendance records
+      parameters:
+        - name: courseId
+          in: query
+          schema:
+            type: integer
+        - name: studentId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AttendanceRecord"
+    post:
+      operationId: createAttendance
+      tags: [attendance]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttendanceInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendanceRecord"
+
+  /attendance/{id}:
+    patch:
+      operationId: updateAttendance
+      tags: [attendance]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttendanceUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendanceRecord"
+
+  # ANNOTATIONS (Anotaciones)
+  /annotations:
+    get:
+      operationId: listAnnotations
+      tags: [annotations]
+      summary: List annotations
+      parameters:
+        - name: studentId
+          in: query
+          schema:
+            type: integer
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [positiva, negativa]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Annotation"
+    post:
+      operationId: createAnnotation
+      tags: [annotations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnnotationInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Annotation"
+
+  /annotations/{id}:
+    patch:
+      operationId: updateAnnotation
+      tags: [annotations]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnnotationUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Annotation"
+    delete:
+      operationId: deleteAnnotation
+      tags: [annotations]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  # MEETINGS (Reuniones)
+  /meetings:
+    get:
+      operationId: listMeetings
+      tags: [meetings]
+      summary: List meetings
+      parameters:
+        - name: requestedById
+          in: query
+          schema:
+            type: integer
+        - name: withUserId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Meeting"
+    post:
+      operationId: createMeeting
+      tags: [meetings]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MeetingInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meeting"
+
+  /meetings/{id}:
+    patch:
+      operationId: updateMeeting
+      tags: [meetings]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MeetingUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meeting"
+    delete:
+      operationId: deleteMeeting
+      tags: [meetings]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  # ANNOUNCEMENTS (Anuncios/Eventos)
+  /announcements:
+    get:
+      operationId: listAnnouncements
+      tags: [announcements]
+      summary: List announcements and events
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Announcement"
+    post:
+      operationId: createAnnouncement
+      tags: [announcements]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnnouncementInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Announcement"
+
+  /announcements/{id}:
+    patch:
+      operationId: updateAnnouncement
+      tags: [announcements]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnnouncementUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Announcement"
+    delete:
+      operationId: deleteAnnouncement
+      tags: [announcements]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  # DASHBOARD SUMMARIES
+  /dashboard/student/{studentId}:
+    get:
+      operationId: getStudentDashboard
+      tags: [dashboard]
+      summary: Get student dashboard summary
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentDashboard"
+
+  /dashboard/teacher/{teacherId}:
+    get:
+      operationId: getTeacherDashboard
+      tags: [dashboard]
+      summary: Get teacher dashboard summary
+      parameters:
+        - name: teacherId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherDashboard"
+
+  /dashboard/admin:
+    get:
+      operationId: getAdminDashboard
+      tags: [dashboard]
+      summary: Get admin dashboard summary
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDashboard"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    MessageResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    LoginInput:
+      type: object
+      required: [rut, password]
+      properties:
+        rut:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [user, token]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+
+    User:
+      type: object
+      required: [id, rut, nombre, apellido, role, email]
+      properties:
+        id:
+          type: integer
+        rut:
+          type: string
+        nombre:
+          type: string
+        apellido:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [alumno, apoderado, profesor, inspector, admin]
+        telefono:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    UserInput:
+      type: object
+      required: [rut, nombre, apellido, email, role, password]
+      properties:
+        rut:
+          type: string
+        nombre:
+          type: string
+        apellido:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [alumno, apoderado, profesor, inspector, admin]
+        password:
+          type: string
+        telefono:
+          type: string
+        apoderadoId:
+          type: ["integer", "null"]
+
+    UserUpdate:
+      type: object
+      properties:
+        nombre:
+          type: string
+        apellido:
+          type: string
+        email:
+          type: string
+        telefono:
+          type: string
+        role:
+          type: string
+          enum: [alumno, apoderado, profesor, inspector, admin]
+
+    Course:
+      type: object
+      required: [id, nombre, profesorId, profesorNombre]
+      properties:
+        id:
+          type: integer
+        nombre:
+          type: string
+        descripcion:
+          type: ["string", "null"]
+        profesorId:
+          type: integer
+        profesorNombre:
+          type: string
+
+    CourseInput:
+      type: object
+      required: [nombre, profesorId]
+      properties:
+        nombre:
+          type: string
+        descripcion:
+          type: string
+        profesorId:
+          type: integer
+
+    ScheduleEntry:
+      type: object
+      required: [id, courseId, courseName, teacherName, dayOfWeek, startTime, endTime, classroom]
+      properties:
+        id:
+          type: integer
+        courseId:
+          type: integer
+        courseName:
+          type: string
+        teacherName:
+          type: string
+        dayOfWeek:
+          type: string
+        startTime:
+          type: string
+        endTime:
+          type: string
+        classroom:
+          type: string
+
+    ScheduleInput:
+      type: object
+      required: [courseId, dayOfWeek, startTime, endTime, classroom]
+      properties:
+        courseId:
+          type: integer
+        dayOfWeek:
+          type: string
+        startTime:
+          type: string
+        endTime:
+          type: string
+        classroom:
+          type: string
+
+    Grade:
+      type: object
+      required: [id, studentId, studentName, studentRut, courseId, courseName, evaluationName, value]
+      properties:
+        id:
+          type: integer
+        studentId:
+          type: integer
+        studentName:
+          type: string
+        studentRut:
+          type: string
+        courseId:
+          type: integer
+        courseName:
+          type: string
+        evaluationName:
+          type: string
+        value:
+          type: number
+        createdAt:
+          type: string
+
+    GradeInput:
+      type: object
+      required: [studentId, courseId, evaluationName, value]
+      properties:
+        studentId:
+          type: integer
+        courseId:
+          type: integer
+        evaluationName:
+          type: string
+        value:
+          type: number
+
+    GradeUpdate:
+      type: object
+      properties:
+        evaluationName:
+          type: string
+        value:
+          type: number
+
+    GradeAverage:
+      type: object
+      required: [studentId, courseId, average, totalGrades]
+      properties:
+        studentId:
+          type: integer
+        courseId:
+          type: integer
+        average:
+          type: number
+        totalGrades:
+          type: integer
+
+    AttendanceRecord:
+      type: object
+      required: [id, studentId, studentName, courseId, courseName, date, present]
+      properties:
+        id:
+          type: integer
+        studentId:
+          type: integer
+        studentName:
+          type: string
+        courseId:
+          type: integer
+        courseName:
+          type: string
+        date:
+          type: string
+        present:
+          type: boolean
+
+    AttendanceInput:
+      type: object
+      required: [studentId, courseId, date, present]
+      properties:
+        studentId:
+          type: integer
+        courseId:
+          type: integer
+        date:
+          type: string
+        present:
+          type: boolean
+
+    AttendanceUpdate:
+      type: object
+      properties:
+        present:
+          type: boolean
+
+    Annotation:
+      type: object
+      required: [id, studentId, studentName, inspectorId, inspectorName, type, description, date]
+      properties:
+        id:
+          type: integer
+        studentId:
+          type: integer
+        studentName:
+          type: string
+        inspectorId:
+          type: integer
+        inspectorName:
+          type: string
+        type:
+          type: string
+          enum: [positiva, negativa]
+        description:
+          type: string
+        date:
+          type: string
+
+    AnnotationInput:
+      type: object
+      required: [studentId, inspectorId, type, description]
+      properties:
+        studentId:
+          type: integer
+        inspectorId:
+          type: integer
+        type:
+          type: string
+          enum: [positiva, negativa]
+        description:
+          type: string
+
+    AnnotationUpdate:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [positiva, negativa]
+        description:
+          type: string
+
+    Meeting:
+      type: object
+      required: [id, requestedById, requestedByName, withUserId, withUserName, title, scheduledAt, status]
+      properties:
+        id:
+          type: integer
+        requestedById:
+          type: integer
+        requestedByName:
+          type: string
+        withUserId:
+          type: integer
+        withUserName:
+          type: string
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        scheduledAt:
+          type: string
+        status:
+          type: string
+          enum: [pendiente, confirmada, cancelada]
+
+    MeetingInput:
+      type: object
+      required: [requestedById, withUserId, title, scheduledAt]
+      properties:
+        requestedById:
+          type: integer
+        withUserId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        scheduledAt:
+          type: string
+
+    MeetingUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        scheduledAt:
+          type: string
+        status:
+          type: string
+          enum: [pendiente, confirmada, cancelada]
+
+    Announcement:
+      type: object
+      required: [id, title, content, type, createdAt, authorName]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        content:
+          type: string
+        type:
+          type: string
+          enum: [anuncio, evento, festividad, alianza]
+        createdAt:
+          type: string
+        authorName:
+          type: string
+        eventDate:
+          type: ["string", "null"]
+
+    AnnouncementInput:
+      type: object
+      required: [title, content, type, authorId]
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        type:
+          type: string
+          enum: [anuncio, evento, festividad, alianza]
+        authorId:
+          type: integer
+        eventDate:
+          type: string
+
+    AnnouncementUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        type:
+          type: string
+          enum: [anuncio, evento, festividad, alianza]
+        eventDate:
+          type: string
+
+    StudentDashboard:
+      type: object
+      required: [totalCourses, upcomingMeetings, recentAnnouncements, gradesSummary]
+      properties:
+        totalCourses:
+          type: integer
+        upcomingMeetings:
+          type: integer
+        recentAnnouncements:
+          type: integer
+        gradesSummary:
+          type: array
+          items:
+            type: object
+            required: [courseId, courseName, average]
+            properties:
+              courseId:
+                type: integer
+              courseName:
+                type: string
+              average:
+                type: number
+
+    TeacherDashboard:
+      type: object
+      required: [totalStudents, totalCourses, pendingMeetings, recentGrades]
+      properties:
+        totalStudents:
+          type: integer
+        totalCourses:
+          type: integer
+        pendingMeetings:
+          type: integer
+        recentGrades:
+          type: integer
+
+    AdminDashboard:
+      type: object
+      required: [totalAlumnos, totalApoderados, totalProfesores, totalInspectores, totalMeetings, totalAnnouncements, totalCourses]
+      properties:
+        totalAlumnos:
+          type: integer
+        totalApoderados:
+          type: integer
+        totalProfesores:
+          type: integer
+        totalInspectores:
+          type: integer
+        totalMeetings:
+          type: integer
+        totalAnnouncements:
+          type: integer
+        totalCourses:
+          type: integer

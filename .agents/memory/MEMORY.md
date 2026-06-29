@@ -1,0 +1,1 @@
+- [API hooks disponibles](api-hooks.md) — No existe useListStudents; usar useListUsers({ role: 'alumno' }) en su lugar. No hay DELETE/PATCH schedule en OpenAPI; usar fetch directo para PATCH /api/schedule/:id.
