@@ -1,32 +1,23 @@
 import { Router } from "express";
-import { db } from "@workspace/db";
-import { attendanceTable, usersTable, coursesTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import * as java from "../lib/javaClient";
+import {
+  fetchAttendanceContext,
+  toAttendance,
+  PRESENT_ESTADO,
+  ABSENT_ESTADO,
+  fetchUserById,
+} from "../lib/javaMappers";
 
 const router = Router();
-
-async function enrichAttendance(a: typeof attendanceTable.$inferSelect) {
-  const student = await db.select().from(usersTable).where(eq(usersTable.id, a.studentId)).limit(1);
-  const course = await db.select().from(coursesTable).where(eq(coursesTable.id, a.courseId)).limit(1);
-  return {
-    id: a.id,
-    studentId: a.studentId,
-    studentName: student[0] ? `${student[0].nombre} ${student[0].apellido}` : "Desconocido",
-    courseId: a.courseId,
-    courseName: course[0]?.nombre || "Desconocido",
-    date: a.date,
-    present: a.present,
-  };
-}
 
 router.get("/attendance", async (req, res) => {
   try {
     const { courseId, studentId } = req.query as Record<string, string>;
-    let records = await db.select().from(attendanceTable);
-    if (courseId) records = records.filter(r => r.courseId === parseInt(courseId));
-    if (studentId) records = records.filter(r => r.studentId === parseInt(studentId));
-    const result = await Promise.all(records.map(enrichAttendance));
-    return res.json(result);
+    const { records, userById, courseById } = await fetchAttendanceContext();
+    let filtered = records;
+    if (courseId) filtered = filtered.filter((r) => r.id_curso === parseInt(courseId));
+    if (studentId) filtered = filtered.filter((r) => r.id_usuarios === parseInt(studentId));
+    return res.json(filtered.map((r) => toAttendance(r, userById, courseById)));
   } catch (err) {
     req.log.error(err);
     return res.status(500).json({ error: "Error interno" });
@@ -36,9 +27,16 @@ router.get("/attendance", async (req, res) => {
 router.post("/attendance", async (req, res) => {
   try {
     const { studentId, courseId, date, present } = req.body;
-    const inserted = await db.insert(attendanceTable).values({ studentId, courseId, date, present }).returning();
-    const result = await enrichAttendance(inserted[0]);
-    return res.status(201).json(result);
+    const student = await fetchUserById(studentId);
+    const created = await java.createAsistencia({
+      estudiante: student ? `${student.nombre} ${student.apellido}` : `Alumno ${studentId}`,
+      fecha: date,
+      estado: present ? PRESENT_ESTADO : ABSENT_ESTADO,
+      id_usuarios: studentId,
+      id_curso: courseId,
+    });
+    const { userById, courseById } = await fetchAttendanceContext();
+    return res.status(201).json(toAttendance(created, userById, courseById));
   } catch (err) {
     req.log.error(err);
     return res.status(500).json({ error: "Error al crear asistencia" });
@@ -49,10 +47,17 @@ router.patch("/attendance/:id", async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const { present } = req.body;
-    const updated = await db.update(attendanceTable).set({ present }).where(eq(attendanceTable.id, id)).returning();
-    if (!updated[0]) return res.status(404).json({ error: "Registro no encontrado" });
-    const result = await enrichAttendance(updated[0]);
-    return res.json(result);
+    const existing = await java.getAsistencia(id);
+    if (!existing) return res.status(404).json({ error: "Registro no encontrado" });
+    const updated = await java.updateAsistencia(id, {
+      id,
+      estudiante: existing.estudiante,
+      fecha: existing.fecha,
+      estado: present ? PRESENT_ESTADO : ABSENT_ESTADO,
+      id_curso: existing.id_curso,
+    });
+    const { userById, courseById } = await fetchAttendanceContext();
+    return res.json(toAttendance(updated, userById, courseById));
   } catch (err) {
     req.log.error(err);
     return res.status(500).json({ error: "Error al actualizar asistencia" });

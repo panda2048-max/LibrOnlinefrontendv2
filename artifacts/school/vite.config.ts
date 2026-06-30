@@ -13,6 +13,12 @@ if (Number.isNaN(port) || port <= 0) {
 
 const basePath = process.env.BASE_PATH ?? "/";
 
+// En Replit, "/api" llega al gateway via el proxy externo del workspace. En
+// desarrollo local (Windows/Mac/Linux fuera de Replit) school y api-server
+// corren en puertos distintos, asi que hace falta este proxy para que los
+// fetch relativos a "/api" lleguen al gateway en vez de a Vite.
+const apiProxyTarget = process.env.API_PROXY_TARGET ?? "http://localhost:8080";
+
 export default defineConfig({
   base: basePath,
   plugins: [
@@ -52,6 +58,12 @@ export default defineConfig({
     allowedHosts: true,
     fs: {
       strict: true,
+    },
+    proxy: {
+      "/api": {
+        target: apiProxyTarget,
+        changeOrigin: true,
+      },
     },
   },
   preview: {

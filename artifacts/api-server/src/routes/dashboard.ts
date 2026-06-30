@@ -1,33 +1,32 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import {
-  usersTable, coursesTable, gradesTable, meetingsTable, announcementsTable,
-  annotationsTable,
-} from "@workspace/db";
-import { eq, and, count } from "drizzle-orm";
+import { announcementsTable } from "@workspace/db";
+import { fetchUserIndex, fetchCourseIndex, fetchGradeContext, fetchMeetingContext, toGrade } from "../lib/javaMappers";
 
 const router = Router();
 
 router.get("/dashboard/student/:studentId", async (req, res) => {
   try {
     const studentId = parseInt(req.params.studentId);
-    const courses = await db.select().from(coursesTable);
-    const meetings = await db.select().from(meetingsTable).where(eq(meetingsTable.requestedById, studentId));
+    const { courses } = await fetchCourseIndex();
+    const { records: meetings } = await fetchMeetingContext();
     const announcements = await db.select().from(announcementsTable);
+    const { notas, userIndex, courseById } = await fetchGradeContext();
 
-    const gradesSummary = await Promise.all(courses.map(async (c) => {
-      const grades = await db.select().from(gradesTable).where(
-        and(eq(gradesTable.studentId, studentId), eq(gradesTable.courseId, c.id))
-      );
-      const avg = grades.length > 0 ? grades.reduce((s, g) => s + g.value, 0) / grades.length : 0;
+    const studentMeetings = meetings.filter((m) => m.id_usuarios === studentId);
+    const grades = notas.map((n) => toGrade(n, userIndex, courseById)).filter((g) => g.studentId === studentId);
+
+    const gradesSummary = courses.map((c) => {
+      const courseGrades = grades.filter((g) => g.courseId === c.id);
+      const avg = courseGrades.length > 0 ? courseGrades.reduce((s, g) => s + g.value, 0) / courseGrades.length : 0;
       return { courseId: c.id, courseName: c.nombre, average: Math.round(avg * 10) / 10 };
-    }));
+    });
 
     return res.json({
       totalCourses: courses.length,
-      upcomingMeetings: meetings.filter(m => m.status === "pendiente").length,
+      upcomingMeetings: studentMeetings.filter((m) => m.estado === "pendiente").length,
       recentAnnouncements: announcements.length,
-      gradesSummary: gradesSummary.filter(g => g.average > 0),
+      gradesSummary: gradesSummary.filter((g) => g.average > 0),
     });
   } catch (err) {
     req.log.error(err);
@@ -38,16 +37,20 @@ router.get("/dashboard/student/:studentId", async (req, res) => {
 router.get("/dashboard/teacher/:teacherId", async (req, res) => {
   try {
     const teacherId = parseInt(req.params.teacherId);
-    const myCourses = await db.select().from(coursesTable).where(eq(coursesTable.profesorId, teacherId));
-    const meetings = await db.select().from(meetingsTable).where(eq(meetingsTable.withUserId, teacherId));
-    const students = await db.select().from(usersTable).where(eq(usersTable.role, "alumno"));
-    const recentGrades = await db.select().from(gradesTable);
+    const { courses } = await fetchCourseIndex();
+    const { records: meetings } = await fetchMeetingContext();
+    const { users } = await fetchUserIndex();
+    const { notas } = await fetchGradeContext();
+
+    const myCourses = courses.filter((c) => c.profesorId === teacherId);
+    const teacherMeetings = meetings.filter((m) => m.id_usuario_2 === teacherId);
+    const students = users.filter((u) => u.role === "alumno");
 
     return res.json({
       totalStudents: students.length,
       totalCourses: myCourses.length,
-      pendingMeetings: meetings.filter(m => m.status === "pendiente").length,
-      recentGrades: recentGrades.length,
+      pendingMeetings: teacherMeetings.filter((m) => m.estado === "pendiente").length,
+      recentGrades: notas.length,
     });
   } catch (err) {
     req.log.error(err);
@@ -57,16 +60,16 @@ router.get("/dashboard/teacher/:teacherId", async (req, res) => {
 
 router.get("/dashboard/admin", async (req, res) => {
   try {
-    const users = await db.select().from(usersTable);
-    const courses = await db.select().from(coursesTable);
-    const meetings = await db.select().from(meetingsTable);
+    const { users } = await fetchUserIndex();
+    const { courses } = await fetchCourseIndex();
+    const { records: meetings } = await fetchMeetingContext();
     const announcements = await db.select().from(announcementsTable);
 
     return res.json({
-      totalAlumnos: users.filter(u => u.role === "alumno").length,
-      totalApoderados: users.filter(u => u.role === "apoderado").length,
-      totalProfesores: users.filter(u => u.role === "profesor").length,
-      totalInspectores: users.filter(u => u.role === "inspector").length,
+      totalAlumnos: users.filter((u) => u.role === "alumno").length,
+      totalApoderados: users.filter((u) => u.role === "apoderado").length,
+      totalProfesores: users.filter((u) => u.role === "profesor").length,
+      totalInspectores: users.filter((u) => u.role === "inspector").length,
       totalMeetings: meetings.length,
       totalAnnouncements: announcements.length,
       totalCourses: courses.length,

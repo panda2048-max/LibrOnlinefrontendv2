@@ -1,21 +1,20 @@
 import { Router } from "express";
-import { db } from "@workspace/db";
-import { coursesTable, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import * as java from "../lib/javaClient";
+import {
+  fetchCourseIndex,
+  fetchUserById,
+  toCourse,
+  splitCourseName,
+  defaultSalaIdForCurso,
+  ensureDocenteForUser,
+} from "../lib/javaMappers";
 
 const router = Router();
 
 router.get("/courses", async (req, res) => {
   try {
-    const courses = await db.select().from(coursesTable);
-    const result = await Promise.all(courses.map(async (c) => {
-      const teacher = await db.select().from(usersTable).where(eq(usersTable.id, c.profesorId)).limit(1);
-      return {
-        ...c,
-        profesorNombre: teacher[0] ? `${teacher[0].nombre} ${teacher[0].apellido}` : "Sin asignar",
-      };
-    }));
-    return res.json(result);
+    const { courses } = await fetchCourseIndex();
+    return res.json(courses);
   } catch (err) {
     req.log.error(err);
     return res.status(500).json({ error: "Error interno" });
@@ -24,13 +23,24 @@ router.get("/courses", async (req, res) => {
 
 router.post("/courses", async (req, res) => {
   try {
-    const { nombre, descripcion, profesorId } = req.body;
-    const inserted = await db.insert(coursesTable).values({ nombre, descripcion, profesorId }).returning();
-    const teacher = await db.select().from(usersTable).where(eq(usersTable.id, inserted[0].profesorId)).limit(1);
-    return res.status(201).json({
-      ...inserted[0],
-      profesorNombre: teacher[0] ? `${teacher[0].nombre} ${teacher[0].apellido}` : "Sin asignar",
+    const { nombre, profesorId } = req.body;
+    const profesorUser = await fetchUserById(profesorId);
+    const docente = await ensureDocenteForUser(
+      profesorId,
+      profesorUser ? `${profesorUser.nombre} ${profesorUser.apellido}` : `Profesor ${profesorId}`,
+    );
+    const { nivel_curso, letra } = splitCourseName(nombre);
+    const id_sala = await defaultSalaIdForCurso();
+    const curso = await java.createCurso({
+      letra,
+      nivel_curso,
+      id_sala,
+      id_docente: docente.id_docente,
+      id_asignaturas: [],
+      id_usuarios: profesorId,
     });
+    const userById = profesorUser ? new Map([[profesorUser.id, profesorUser]]) : new Map();
+    return res.status(201).json(toCourse(curso, userById));
   } catch (err) {
     req.log.error(err);
     return res.status(500).json({ error: "Error al crear curso" });
@@ -38,14 +48,16 @@ router.post("/courses", async (req, res) => {
 });
 
 router.get("/courses/:id", async (req, res) => {
-  const id = parseInt(req.params.id);
-  const course = await db.select().from(coursesTable).where(eq(coursesTable.id, id)).limit(1);
-  if (!course[0]) return res.status(404).json({ error: "Curso no encontrado" });
-  const teacher = await db.select().from(usersTable).where(eq(usersTable.id, course[0].profesorId)).limit(1);
-  return res.json({
-    ...course[0],
-    profesorNombre: teacher[0] ? `${teacher[0].nombre} ${teacher[0].apellido}` : "Sin asignar",
-  });
+  try {
+    const id = parseInt(req.params.id);
+    const { byId } = await fetchCourseIndex();
+    const course = byId.get(id);
+    if (!course) return res.status(404).json({ error: "Curso no encontrado" });
+    return res.json(course);
+  } catch (err) {
+    req.log.error(err);
+    return res.status(500).json({ error: "Error interno" });
+  }
 });
 
 export default router;
