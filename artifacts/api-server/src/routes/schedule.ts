@@ -3,16 +3,24 @@ import { db } from "@workspace/db";
 import { scheduleTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { fetchCourseIndex } from "../lib/javaMappers";
+import * as java from "../lib/javaClient";
 
 const router = Router();
 
 router.get("/schedule", async (req, res) => {
   try {
-    const { studentId: _studentId, teacherId, courseId } = req.query as Record<string, string>;
+    const { studentId, teacherId, courseId } = req.query as Record<string, string>;
     let schedules = await db.select().from(scheduleTable);
 
     if (courseId) {
       schedules = schedules.filter((s) => s.courseId === parseInt(courseId));
+    }
+
+    // Filter by enrolled courses when studentId is provided
+    if (studentId) {
+      const enrollments = await java.listCursoEstudiante({ studentId: parseInt(studentId) });
+      const enrolledCourseIds = new Set(enrollments.map((e) => e.id_curso));
+      schedules = schedules.filter((s) => enrolledCourseIds.has(s.courseId));
     }
 
     const { byId: courseById } = await fetchCourseIndex();

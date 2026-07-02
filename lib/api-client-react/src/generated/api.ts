@@ -33,6 +33,9 @@ import type {
   AuthResponse,
   Course,
   CourseInput,
+  CourseUpdate,
+  Enrollment,
+  EnrollmentInput,
   Grade,
   GradeAverage,
   GradeInput,
@@ -40,6 +43,7 @@ import type {
   HealthStatus,
   ListAnnotationsParams,
   ListAttendanceParams,
+  ListEnrollmentsParams,
   ListGradesParams,
   ListMeetingsParams,
   ListScheduleParams,
@@ -939,6 +943,373 @@ export function useGetCourse<TData = Awaited<ReturnType<typeof getCourse>>, TErr
 
 
 
+
+export const getUpdateCourseUrl = (id: number,) => {
+
+
+
+
+  return `/api/courses/${id}`
+}
+
+/**
+ * @summary Update course (admin)
+ */
+export const updateCourse = async (id: number,
+    courseUpdate: CourseUpdate, options?: RequestInit): Promise<Course> => {
+
+  return customFetch<Course>(getUpdateCourseUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      courseUpdate,)
+  }
+);}
+
+
+
+
+export const getUpdateCourseMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCourse>>, TError,{id: number;data: BodyType<CourseUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCourse>>, TError,{id: number;data: BodyType<CourseUpdate>}, TContext> => {
+
+const mutationKey = ['updateCourse'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCourse>>, {id: number;data: BodyType<CourseUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateCourse(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCourseMutationResult = NonNullable<Awaited<ReturnType<typeof updateCourse>>>
+    export type UpdateCourseMutationBody = BodyType<CourseUpdate>
+    export type UpdateCourseMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update course (admin)
+ */
+export const useUpdateCourse = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCourse>>, TError,{id: number;data: BodyType<CourseUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateCourse>>,
+        TError,
+        {id: number;data: BodyType<CourseUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateCourseMutationOptions(options));
+    }
+
+export const getDeleteCourseUrl = (id: number,) => {
+
+
+
+
+  return `/api/courses/${id}`
+}
+
+/**
+ * @summary Delete course (admin)
+ */
+export const deleteCourse = async (id: number, options?: RequestInit): Promise<MessageResponse> => {
+
+  return customFetch<MessageResponse>(getDeleteCourseUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteCourseMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCourse>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteCourse>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteCourse'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteCourse>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteCourse(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteCourseMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCourse>>>
+
+    export type DeleteCourseMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete course (admin)
+ */
+export const useDeleteCourse = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCourse>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteCourse>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteCourseMutationOptions(options));
+    }
+
+export const getListEnrollmentsUrl = (params?: ListEnrollmentsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/enrollments?${stringifiedParams}` : `/api/enrollments`
+}
+
+/**
+ * @summary List enrollments (optionally filtered by studentId or courseId)
+ */
+export const listEnrollments = async (params?: ListEnrollmentsParams, options?: RequestInit): Promise<Enrollment[]> => {
+
+  return customFetch<Enrollment[]>(getListEnrollmentsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListEnrollmentsQueryKey = (params?: ListEnrollmentsParams,) => {
+    return [
+    `/api/enrollments`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListEnrollmentsQueryOptions = <TData = Awaited<ReturnType<typeof listEnrollments>>, TError = ErrorType<unknown>>(params?: ListEnrollmentsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listEnrollments>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListEnrollmentsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listEnrollments>>> = ({ signal }) => listEnrollments(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listEnrollments>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListEnrollmentsQueryResult = NonNullable<Awaited<ReturnType<typeof listEnrollments>>>
+export type ListEnrollmentsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List enrollments (optionally filtered by studentId or courseId)
+ */
+
+export function useListEnrollments<TData = Awaited<ReturnType<typeof listEnrollments>>, TError = ErrorType<unknown>>(
+ params?: ListEnrollmentsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listEnrollments>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListEnrollmentsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateEnrollmentUrl = () => {
+
+
+
+
+  return `/api/enrollments`
+}
+
+/**
+ * @summary Enroll a student in a course (admin)
+ */
+export const createEnrollment = async (enrollmentInput: EnrollmentInput, options?: RequestInit): Promise<Enrollment> => {
+
+  return customFetch<Enrollment>(getCreateEnrollmentUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      enrollmentInput,)
+  }
+);}
+
+
+
+
+export const getCreateEnrollmentMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEnrollment>>, TError,{data: BodyType<EnrollmentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createEnrollment>>, TError,{data: BodyType<EnrollmentInput>}, TContext> => {
+
+const mutationKey = ['createEnrollment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createEnrollment>>, {data: BodyType<EnrollmentInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createEnrollment(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateEnrollmentMutationResult = NonNullable<Awaited<ReturnType<typeof createEnrollment>>>
+    export type CreateEnrollmentMutationBody = BodyType<EnrollmentInput>
+    export type CreateEnrollmentMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Enroll a student in a course (admin)
+ */
+export const useCreateEnrollment = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createEnrollment>>, TError,{data: BodyType<EnrollmentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createEnrollment>>,
+        TError,
+        {data: BodyType<EnrollmentInput>},
+        TContext
+      > => {
+      return useMutation(getCreateEnrollmentMutationOptions(options));
+    }
+
+export const getDeleteEnrollmentUrl = (id: number,) => {
+
+
+
+
+  return `/api/enrollments/${id}`
+}
+
+/**
+ * @summary Unenroll a student from a course (admin)
+ */
+export const deleteEnrollment = async (id: number, options?: RequestInit): Promise<MessageResponse> => {
+
+  return customFetch<MessageResponse>(getDeleteEnrollmentUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteEnrollmentMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteEnrollment>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteEnrollment>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteEnrollment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteEnrollment>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteEnrollment(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteEnrollmentMutationResult = NonNullable<Awaited<ReturnType<typeof deleteEnrollment>>>
+
+    export type DeleteEnrollmentMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Unenroll a student from a course (admin)
+ */
+export const useDeleteEnrollment = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteEnrollment>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteEnrollment>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteEnrollmentMutationOptions(options));
+    }
 
 export const getListScheduleUrl = (params?: ListScheduleParams,) => {
   const normalizedParams = new URLSearchParams();

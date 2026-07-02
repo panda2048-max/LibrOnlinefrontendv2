@@ -2,28 +2,35 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { announcementsTable } from "@workspace/db";
 import { fetchUserIndex, fetchCourseIndex, fetchGradeContext, fetchMeetingContext, toGrade } from "../lib/javaMappers";
+import * as java from "../lib/javaClient";
 
 const router = Router();
 
 router.get("/dashboard/student/:studentId", async (req, res) => {
   try {
     const studentId = parseInt(req.params.studentId);
-    const { courses } = await fetchCourseIndex();
-    const { records: meetings } = await fetchMeetingContext();
-    const announcements = await db.select().from(announcementsTable);
-    const { notas, userIndex, courseById } = await fetchGradeContext();
+    const [enrollments, { byId: courseById }, { records: meetings }, announcements, { notas, userIndex, courseById: courseByIdGrades }] = await Promise.all([
+      java.listCursoEstudiante({ studentId }),
+      fetchCourseIndex(),
+      fetchMeetingContext(),
+      db.select().from(announcementsTable),
+      fetchGradeContext(),
+    ]);
+
+    const enrolledCourseIds = enrollments.map((e) => e.id_curso);
+    const enrolledCourses = enrolledCourseIds.map((id) => courseById.get(id)).filter(Boolean) as NonNullable<ReturnType<typeof courseById.get>>[];
 
     const studentMeetings = meetings.filter((m) => m.id_usuarios === studentId);
-    const grades = notas.map((n) => toGrade(n, userIndex, courseById)).filter((g) => g.studentId === studentId);
+    const grades = notas.map((n) => toGrade(n, userIndex, courseByIdGrades)).filter((g) => g.studentId === studentId);
 
-    const gradesSummary = courses.map((c) => {
+    const gradesSummary = enrolledCourses.map((c) => {
       const courseGrades = grades.filter((g) => g.courseId === c.id);
       const avg = courseGrades.length > 0 ? courseGrades.reduce((s, g) => s + g.value, 0) / courseGrades.length : 0;
       return { courseId: c.id, courseName: c.nombre, average: Math.round(avg * 10) / 10 };
     });
 
     return res.json({
-      totalCourses: courses.length,
+      totalCourses: enrolledCourses.length,
       upcomingMeetings: studentMeetings.filter((m) => m.estado === "pendiente").length,
       recentAnnouncements: announcements.length,
       gradesSummary: gradesSummary.filter((g) => g.average > 0),

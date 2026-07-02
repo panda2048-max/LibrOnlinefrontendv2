@@ -32,7 +32,9 @@ router.post("/users", async (req, res) => {
     await java.createRol({ id_usuario: usuario.id_usuarios, tipo_rol: role });
     await java.createEmail({ id_usuario: usuario.id_usuarios, email });
     if (role === "profesor") {
-      await ensureDocenteForUser(usuario.id_usuarios, `${nombre} ${apellido}`.trim());
+      await ensureDocenteForUser(usuario.id_usuarios, `${nombre} ${apellido}`.trim()).catch((e) => {
+        req.log.warn({ err: e }, "Gestion_Cursos unavailable — docente record skipped, will be created on next course assignment");
+      });
     }
     const user = await fetchUserById(usuario.id_usuarios);
     return res.status(201).json(user);
@@ -88,7 +90,9 @@ router.patch("/users/:id", async (req, res) => {
       if (existing) await java.updateRol({ id_rol: existing.id_rol, tipo_rol: role });
       else await java.createRol({ id_usuario: id, tipo_rol: role });
       if (role === "profesor") {
-        await ensureDocenteForUser(id, `${primer_nombre} ${ap_paterno}`.trim());
+        await ensureDocenteForUser(id, `${primer_nombre} ${ap_paterno}`.trim()).catch((e) => {
+          req.log.warn({ err: e }, "Gestion_Cursos unavailable — docente record skipped");
+        });
       }
     }
 

@@ -183,6 +183,79 @@ export const GetCourseResponse = zod.object({
 
 
 /**
+ * @summary Update course (admin)
+ */
+export const UpdateCourseParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateCourseBody = zod.object({
+  "nombre": zod.string().optional(),
+  "profesorId": zod.number().optional()
+})
+
+export const UpdateCourseResponse = zod.object({
+  "id": zod.number(),
+  "nombre": zod.string(),
+  "descripcion": zod.string().nullish(),
+  "profesorId": zod.number(),
+  "profesorNombre": zod.string()
+})
+
+
+/**
+ * @summary Delete course (admin)
+ */
+export const DeleteCourseParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteCourseResponse = zod.object({
+  "message": zod.string()
+})
+
+
+/**
+ * @summary List enrollments (optionally filtered by studentId or courseId)
+ */
+export const ListEnrollmentsQueryParams = zod.object({
+  "studentId": zod.coerce.number().optional(),
+  "courseId": zod.coerce.number().optional()
+})
+
+export const ListEnrollmentsResponseItem = zod.object({
+  "id": zod.number(),
+  "studentId": zod.number(),
+  "studentName": zod.string(),
+  "studentRut": zod.string(),
+  "courseId": zod.number(),
+  "courseName": zod.string()
+})
+export const ListEnrollmentsResponse = zod.array(ListEnrollmentsResponseItem)
+
+
+/**
+ * @summary Enroll a student in a course (admin)
+ */
+export const CreateEnrollmentBody = zod.object({
+  "studentId": zod.number(),
+  "courseId": zod.number()
+})
+
+
+/**
+ * @summary Unenroll a student from a course (admin)
+ */
+export const DeleteEnrollmentParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteEnrollmentResponse = zod.object({
+  "message": zod.string()
+})
+
+
+/**
  * @summary List schedule entries (optionally filtered by studentId or teacherId)
  */
 export const ListScheduleQueryParams = zod.object({

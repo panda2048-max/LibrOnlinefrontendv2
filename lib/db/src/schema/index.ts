@@ -6,3 +6,4 @@ export * from "./attendance";
 export * from "./annotations";
 export * from "./meetings";
 export * from "./announcements";
+export * from "./enrollments";

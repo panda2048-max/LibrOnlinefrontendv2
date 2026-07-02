@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 const navByRole = {
   alumno: [
     { label: "Dashboard", href: "/alumno/dashboard", icon: LayoutDashboard },
+    { label: "Mis Cursos", href: "/alumno/cursos", icon: GraduationCap },
     { label: "Horario", href: "/alumno/horario", icon: Calendar },
     { label: "Anuncios", href: "/alumno/anuncios", icon: Megaphone },
   ],
@@ -25,6 +26,7 @@ const navByRole = {
     { label: "Asistencia", href: "/profesor/asistencia", icon: ClipboardCheck },
     { label: "Notas", href: "/profesor/notas", icon: BookOpen },
     { label: "Reuniones", href: "/profesor/reuniones", icon: CalendarCheck },
+    { label: "Anuncios", href: "/profesor/anuncios", icon: Megaphone },
   ],
   inspector: [
     { label: "Dashboard", href: "/inspector/dashboard", icon: LayoutDashboard },
@@ -34,6 +36,7 @@ const navByRole = {
   admin: [
     { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { label: "Usuarios", href: "/admin/usuarios", icon: UserCog },
+    { label: "Cursos", href: "/admin/cursos", icon: GraduationCap },
     { label: "Notas", href: "/admin/notas", icon: BookOpen },
     { label: "Anotaciones", href: "/admin/anotaciones", icon: FileText },
     { label: "Reuniones", href: "/admin/reuniones", icon: CalendarCheck },

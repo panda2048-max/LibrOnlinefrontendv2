@@ -37,7 +37,17 @@ async function javaFetch<T>(
   });
 
   const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
+  // Some Java endpoints (e.g. the DELETE handlers) return a plain-text
+  // success message instead of JSON — fall back to the raw string instead
+  // of throwing, so a 200 with a non-JSON body isn't mistaken for a failure.
+  let data: unknown = null;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = text;
+    }
+  }
 
   if (!response.ok) {
     throw new JavaApiError(service, response.status, path, data);
@@ -164,6 +174,32 @@ export const createCurso = (data: {
   id_asignaturas: number[];
   id_usuarios: number;
 }) => post<JavaCurso>("cursos", "/curso", data);
+export const updateCurso = (data: {
+  id_curso: number;
+  letra: string;
+  nivel_curso: string;
+  id_sala: number;
+  id_docente: number;
+}) => put<JavaCurso>("cursos", "/curso", data);
+export const deleteCurso = (id: number) => del<string>("cursos", `/curso/${id}`);
+
+// ---------------------------------------------------------------------------
+// Curso-Estudiante enrollment (within Gestion_Cursos, port 5003)
+// ---------------------------------------------------------------------------
+
+export interface JavaCursoEstudiante {
+  id: number;
+  id_curso: number;
+  id_estudiante: number;
+}
+
+export const listCursoEstudiante = (params: { courseId?: number; studentId?: number }) => {
+  const query = params.courseId != null ? `?courseId=${params.courseId}` : params.studentId != null ? `?studentId=${params.studentId}` : "";
+  return get<JavaCursoEstudiante[]>("cursos", `/curso-estudiante${query}`);
+};
+export const createCursoEstudiante = (data: { id_curso: number; id_estudiante: number }) =>
+  post<JavaCursoEstudiante>("cursos", "/curso-estudiante", data);
+export const deleteCursoEstudiante = (id: number) => del<string>("cursos", `/curso-estudiante/${id}`);
 
 export const listDocentes = () => get<JavaDocente[]>("cursos", "/docente");
 export const createDocente = (data: {

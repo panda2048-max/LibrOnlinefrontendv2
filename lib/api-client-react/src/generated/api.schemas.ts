@@ -103,6 +103,25 @@ export interface CourseInput {
   profesorId: number;
 }
 
+export interface CourseUpdate {
+  nombre?: string;
+  profesorId?: number;
+}
+
+export interface Enrollment {
+  id: number;
+  studentId: number;
+  studentName: string;
+  studentRut: string;
+  courseId: number;
+  courseName: string;
+}
+
+export interface EnrollmentInput {
+  studentId: number;
+  courseId: number;
+}
+
 export interface ScheduleEntry {
   id: number;
   courseId: number;
@@ -367,6 +386,11 @@ export const ListUsersRole = {
   inspector: 'inspector',
   admin: 'admin',
 } as const;
+
+export type ListEnrollmentsParams = {
+studentId?: number;
+courseId?: number;
+};
 
 export type ListScheduleParams = {
 studentId?: number;

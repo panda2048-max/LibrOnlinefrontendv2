@@ -1,5 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { useListCourses, useListUsers } from "@workspace/api-client-react";
+import { useListCourses, useListEnrollments, useListUsers } from "@workspace/api-client-react";
 import { PageLayout } from "@/components/AppSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,8 +8,7 @@ import { Users, ChevronDown, ChevronUp } from "lucide-react";
 
 function CourseCard({ course }) {
   const [open, setOpen] = useState(false);
-  const { data: allStudents = [], isLoading } = useListUsers({ role: "alumno" });
-  const students = allStudents;
+  const { data: enrollments = [], isLoading } = useListEnrollments({ courseId: course.id });
 
   return (
     <Card>
@@ -18,7 +17,7 @@ function CourseCard({ course }) {
           <div>
             <CardTitle className="text-base">{course.nombre}</CardTitle>
             <p className="text-sm text-muted-foreground mt-0.5 flex items-center gap-1">
-              <Users className="w-3.5 h-3.5" />{students.length} alumnos
+              <Users className="w-3.5 h-3.5" />{enrollments.length} alumnos matriculados
             </p>
           </div>
           {open ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
@@ -26,15 +25,15 @@ function CourseCard({ course }) {
       </CardHeader>
       {open && (
         <CardContent className="pt-0">
-          {isLoading ? <Skeleton className="h-20" /> : students.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Sin alumnos.</p>
+          {isLoading ? <Skeleton className="h-20" /> : enrollments.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Sin alumnos matriculados.</p>
           ) : (
             <div className="space-y-1">
-              {students.map((s, i) => (
-                <div key={s.id} className="flex items-center gap-3 py-1.5 border-b border-border last:border-0">
+              {enrollments.map((e, i) => (
+                <div key={e.id} className="flex items-center gap-3 py-1.5 border-b border-border last:border-0">
                   <span className="text-xs text-muted-foreground w-5">{i + 1}.</span>
-                  <span className="text-sm font-medium">{s.nombre} {s.apellido}</span>
-                  <span className="text-xs text-muted-foreground ml-auto">{s.rut}</span>
+                  <span className="text-sm font-medium">{e.studentName}</span>
+                  <span className="text-xs text-muted-foreground ml-auto">{e.studentRut}</span>
                 </div>
               ))}
             </div>
@@ -47,13 +46,14 @@ function CourseCard({ course }) {
 
 export default function ProfesorCursos() {
   const { user } = useAuth();
-  const { data: courses = [], isLoading } = useListCourses({ teacherId: user?.id });
+  const { data: courses = [], isLoading } = useListCourses();
+  const myCourses = courses.filter((c) => c.profesorId === user?.id);
 
   return (
     <PageLayout title="Mis Cursos">
       {isLoading ? <div className="space-y-4">{[1, 2].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}</div>
-        : courses.length === 0 ? <Card><CardContent className="py-12 text-center text-muted-foreground">No tienes cursos asignados.</CardContent></Card>
-        : <div className="space-y-3">{courses.map(c => <CourseCard key={c.id} course={c} />)}</div>}
+        : myCourses.length === 0 ? <Card><CardContent className="py-12 text-center text-muted-foreground">No tienes cursos asignados.</CardContent></Card>
+        : <div className="space-y-3">{myCourses.map(c => <CourseCard key={c.id} course={c} />)}</div>}
     </PageLayout>
   );
 }

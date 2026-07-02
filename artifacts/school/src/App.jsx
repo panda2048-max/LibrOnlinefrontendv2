@@ -8,6 +8,7 @@ import LoginPage from "@/pages/login";
 import NotFound from "@/pages/not-found";
 
 import AlumnoDashboard from "@/pages/alumno/dashboard";
+import AlumnoCursos from "@/pages/alumno/cursos";
 import AlumnoHorario from "@/pages/alumno/horario";
 import AlumnoNotas from "@/pages/alumno/notas";
 import AlumnoAnuncios from "@/pages/alumno/anuncios";
@@ -23,6 +24,7 @@ import ProfesorCursos from "@/pages/profesor/cursos";
 import ProfesorAsistencia from "@/pages/profesor/asistencia";
 import ProfesorNotas from "@/pages/profesor/notas";
 import ProfesorReuniones from "@/pages/profesor/reuniones";
+import ProfesorAnuncios from "@/pages/profesor/anuncios";
 
 import InspectorDashboard from "@/pages/inspector/dashboard";
 import InspectorAnotaciones from "@/pages/inspector/anotaciones";
@@ -30,6 +32,7 @@ import InspectorReuniones from "@/pages/inspector/reuniones";
 
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminUsuarios from "@/pages/admin/usuarios";
+import AdminCursos from "@/pages/admin/cursos";
 import AdminNotas from "@/pages/admin/notas";
 import AdminAnotaciones from "@/pages/admin/anotaciones";
 import AdminReuniones from "@/pages/admin/reuniones";
@@ -67,6 +70,7 @@ function Router() {
       <Route path="/" component={RoleRedirect} />
 
       <Route path="/alumno/dashboard"><ProtectedRoute component={AlumnoDashboard} roles={["alumno"]} /></Route>
+      <Route path="/alumno/cursos"><ProtectedRoute component={AlumnoCursos} roles={["alumno"]} /></Route>
       <Route path="/alumno/horario"><ProtectedRoute component={AlumnoHorario} roles={["alumno"]} /></Route>
       <Route path="/alumno/notas/:courseId"><ProtectedRoute component={AlumnoNotas} roles={["alumno"]} /></Route>
       <Route path="/alumno/anuncios"><ProtectedRoute component={AlumnoAnuncios} roles={["alumno"]} /></Route>
@@ -82,6 +86,7 @@ function Router() {
       <Route path="/profesor/asistencia"><ProtectedRoute component={ProfesorAsistencia} roles={["profesor"]} /></Route>
       <Route path="/profesor/notas"><ProtectedRoute component={ProfesorNotas} roles={["profesor"]} /></Route>
       <Route path="/profesor/reuniones"><ProtectedRoute component={ProfesorReuniones} roles={["profesor"]} /></Route>
+      <Route path="/profesor/anuncios"><ProtectedRoute component={ProfesorAnuncios} roles={["profesor"]} /></Route>
 
       <Route path="/inspector/dashboard"><ProtectedRoute component={InspectorDashboard} roles={["inspector"]} /></Route>
       <Route path="/inspector/anotaciones"><ProtectedRoute component={InspectorAnotaciones} roles={["inspector"]} /></Route>
@@ -89,6 +94,7 @@ function Router() {
 
       <Route path="/admin/dashboard"><ProtectedRoute component={AdminDashboard} roles={["admin"]} /></Route>
       <Route path="/admin/usuarios"><ProtectedRoute component={AdminUsuarios} roles={["admin"]} /></Route>
+      <Route path="/admin/cursos"><ProtectedRoute component={AdminCursos} roles={["admin"]} /></Route>
       <Route path="/admin/notas"><ProtectedRoute component={AdminNotas} roles={["admin"]} /></Route>
       <Route path="/admin/anotaciones"><ProtectedRoute component={AdminAnotaciones} roles={["admin"]} /></Route>
       <Route path="/admin/reuniones"><ProtectedRoute component={AdminReuniones} roles={["admin"]} /></Route>

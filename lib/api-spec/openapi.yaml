@@ -11,6 +11,7 @@ tags:
   - name: auth
   - name: users
   - name: courses
+  - name: enrollments
   - name: schedule
   - name: grades
   - name: attendance
@@ -224,6 +225,107 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Course"
+    patch:
+      operationId: updateCourse
+      tags: [courses]
+      summary: Update course (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+    delete:
+      operationId: deleteCourse
+      tags: [courses]
+      summary: Delete course (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  # ENROLLMENTS (Matriculas alumno-curso)
+  /enrollments:
+    get:
+      operationId: listEnrollments
+      tags: [enrollments]
+      summary: List enrollments (optionally filtered by studentId or courseId)
+      parameters:
+        - name: studentId
+          in: query
+          schema:
+            type: integer
+        - name: courseId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Enrollment"
+    post:
+      operationId: createEnrollment
+      tags: [enrollments]
+      summary: Enroll a student in a course (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnrollmentInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Enrollment"
+
+  /enrollments/{id}:
+    delete:
+      operationId: deleteEnrollment
+      tags: [enrollments]
+      summary: Unenroll a student from a course (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
 
   # SCHEDULE (Horario)
   /schedule:
@@ -849,6 +951,40 @@ components:
         descripcion:
           type: string
         profesorId:
+          type: integer
+
+    CourseUpdate:
+      type: object
+      properties:
+        nombre:
+          type: string
+        profesorId:
+          type: integer
+
+    Enrollment:
+      type: object
+      required: [id, studentId, studentName, studentRut, courseId, courseName]
+      properties:
+        id:
+          type: integer
+        studentId:
+          type: integer
+        studentName:
+          type: string
+        studentRut:
+          type: string
+        courseId:
+          type: integer
+        courseName:
+          type: string
+
+    EnrollmentInput:
+      type: object
+      required: [studentId, courseId]
+      properties:
+        studentId:
+          type: integer
+        courseId:
           type: integer
 
     ScheduleEntry:
