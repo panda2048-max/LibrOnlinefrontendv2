@@ -1,0 +1,24 @@
+FROM node:22-alpine AS build
+WORKDIR /app
+RUN corepack enable && corepack prepare pnpm@11.9.0 --activate
+
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
+COPY artifacts/school/package.json artifacts/school/package.json
+COPY artifacts/api-server/package.json artifacts/api-server/package.json
+COPY artifacts/mockup-sandbox/package.json artifacts/mockup-sandbox/package.json
+COPY lib/api-client-react/package.json lib/api-client-react/package.json
+COPY lib/api-spec/package.json lib/api-spec/package.json
+COPY lib/api-zod/package.json lib/api-zod/package.json
+COPY lib/db/package.json lib/db/package.json
+COPY scripts/package.json scripts/package.json
+RUN pnpm install --frozen-lockfile
+
+COPY tsconfig.base.json tsconfig.json ./
+COPY artifacts/api-server artifacts/api-server
+COPY lib lib
+RUN pnpm --filter @workspace/api-server run build
+
+ENV NODE_ENV=production
+WORKDIR /app/artifacts/api-server
+EXPOSE 8080
+CMD ["node", "--enable-source-maps", "dist/index.mjs"]
