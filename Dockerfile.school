@@ -20,5 +20,5 @@ RUN pnpm --filter @workspace/school run build
 
 FROM nginx:1.27-alpine
 COPY --from=build /app/artifacts/school/dist/public /usr/share/nginx/html
-COPY nginx.school.conf /etc/nginx/conf.d/default.conf
+COPY nginx.school.conf.template /etc/nginx/templates/default.conf.template
 EXPOSE 80

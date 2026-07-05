@@ -1,0 +1,33 @@
+services:
+  api-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.api-server
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - NODE_ENV=production
+      - DATABASE_URL=postgres://postgres:postgres@db-api-server:5432/libronline
+      - USUARIOS_API_URL=http://${USUARIOS_HOST}:5000
+      - CURSOS_API_URL=http://${CURSOS_HOST}:5003
+      - NOTAS_API_URL=http://${NOTAS_HOST}:8000
+      - ASISTENCIA_API_URL=http://${ASISTENCIA_HOST}:5005
+      - ANOTACIONES_API_URL=http://${ANOTACIONES_HOST}:5006
+      - REUNIONES_API_URL=http://${REUNIONES_HOST}:5002
+    depends_on:
+      db-api-server:
+        condition: service_healthy
+
+  db-api-server:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: libronline
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
